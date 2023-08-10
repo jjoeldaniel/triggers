@@ -26,6 +26,7 @@ jobs:
       - name: Generate release tag
         id: tag
         run: |
+          export TZ="America/Los_Angeles"
           echo "RELEASE_TAG=v$(date +'%Y.%m.%d_%H-%M')" >> $GITHUB_ENV
 
       - name: Create tag
