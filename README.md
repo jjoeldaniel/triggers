@@ -8,7 +8,7 @@
 
 - [Commands](#commands)
 - [Bot Setup](#bot-setup)
-  - [IDE Setup](#ide-setup)
+  - [Setup](#setup)
   - [Running](#running)
 - [Contributing](#contributing)
 - [FAQ](#faq)
@@ -30,27 +30,24 @@
 2. Register your bot
 3. Enable Server Members Intent and Message Content Intent
 
-### IDE Setup
-
-      NOTE: We highly recommend using IntelliJ IDEA for development.
+### Setup
 
 1. Clone the repository
 2. Create a `.env` file in the main directory (copy the template provided in [.env.example](.env.example)):
-3. Specify Corretto 18 as the project SDK
-4. Download [Maven Code Style](https://maven.apache.org/developers/conventions/code.html#intellij-idea)
-5. Restart IDE
+3. Ensure you are using JDK 19
 
 ### Running
 
 1. Build the project
 
-   ```gradle
-   python3 build.py
+   ```bash
+   ./gradlew clean
+   ./gradlew build
    ```
 
 2. Run the project
 
-   ```terminal
+   ```bash
    java -jar triggers.jar
    ```
 
@@ -67,8 +64,6 @@
 
 1. Create a new branch
 2. Make your changes
-   - Make sure Maven is set as the current Code Style Scheme
-   - Reformat code with `Ctrl + Alt + L`
 3. Create a pull request
 
 ## FAQ
