@@ -15,60 +15,53 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Bot
-{
+public class Bot {
 
-    public static void main( String[] args ) throws InterruptedException
-    {
+    public static void main(String[] args) throws InterruptedException {
 
         final Dotenv dotenv = Dotenv.configure()
-            .ignoreIfMissing()
-            .load();
+                .ignoreIfMissing()
+                .load();
 
         // Bot Token
-        final String token = dotenv.get( "DISCORD_TOKEN" );
+        final String token = dotenv.get("DISCORD_TOKEN");
 
         // SLF4J Logger
-        final Logger log = LoggerFactory.getLogger( Bot.class );
+        final Logger log = LoggerFactory.getLogger(Bot.class);
 
         // List of authorized roles
-        final List<String> authorizedRoleIDs = Arrays.asList( dotenv.get( "AUTHORIZED_ROLE_ID" ).split( "," ) );
+        final List<String> authorizedRoleIDs = Arrays.asList(dotenv.get("AUTHORIZED_ROLE_ID").split(","));
 
-        if ( authorizedRoleIDs.get( 0 ).equals( "" ) )
-        {
-            log.error( "No authorized roles found. Please add at least one role ID to the .env file." );
+        if (authorizedRoleIDs.get(0).equals("")) {
+            log.error("No authorized roles found. Please add at least one role ID to the .env file.");
         }
 
         // Gateway Intents
         final List<GatewayIntent> gatewayIntents = Arrays.asList(
                 GatewayIntent.GUILD_MEMBERS,
                 GatewayIntent.MESSAGE_CONTENT,
-                GatewayIntent.GUILD_MESSAGES
-        );
+                GatewayIntent.GUILD_MESSAGES);
 
         // JDA Builder
-        final JDA jda = JDABuilder.createLight( token, gatewayIntents )
-                .setStatus( OnlineStatus.ONLINE )
-                .setMemberCachePolicy( MemberCachePolicy.ALL )
+        final JDA jda = JDABuilder.createLight(token, gatewayIntents)
+                .setStatus(OnlineStatus.ONLINE)
+                .setMemberCachePolicy(MemberCachePolicy.ALL)
 
                 // Event listeners (new instances of other classes extending ListenerAdapter)
-                .addEventListeners( new Register(), new Trigger( authorizedRoleIDs ) )
+                .addEventListeners(new Register(), new Trigger(authorizedRoleIDs))
 
                 .build()
                 .awaitReady();
 
-        log.info( jda.getSelfUser().getName() + "#" + jda.getSelfUser().getDiscriminator() );
+        log.info(jda.getSelfUser().getName());
 
         // Status
-        jda.getPresence().setActivity( Activity.listening( "/trigger help" ) );
+        jda.getPresence().setActivity(Activity.listening("/trigger help"));
 
-        try
-        {
+        try {
             Database.initializeDatabase();
-        }
-        catch ( SQLException e )
-        {
-            log.error( "Failed to initialize database" );
+        } catch (SQLException e) {
+            log.error("Failed to initialize database");
             e.printStackTrace();
         }
     }

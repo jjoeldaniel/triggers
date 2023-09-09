@@ -1,7 +1,6 @@
 package com.acmcsuf.triggers;
 
-public final class Commands
-{
+public final class Commands {
 
     // Command List
     public static final String TRIGGER = "triggers";
@@ -37,8 +36,7 @@ public final class Commands
     public static final String VIEW_OPTION_NAME = "user";
     public static final String VIEW_OPTION_DESCRIPTION = "Member to view";
 
-    private Commands()
-    {
+    private Commands() {
 
     }
 
