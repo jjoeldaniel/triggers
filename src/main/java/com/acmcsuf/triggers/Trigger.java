@@ -320,102 +320,22 @@ public class Trigger extends ListenerAdapter {
         String messageContent = event.getMessage().getContentRaw().toLowerCase();
 
         // Loop through HashMap keySet
-        userLoop: for (String id : triggerMap.keySet()) {
+        for (String id : triggerMap.keySet()) {
 
             // If members value contains messageContent
             if (inSet(messageContent, triggerMap.get(id))) {
 
                 // Retrieve triggered member
                 RestAction<Member> action = event.getGuild().retrieveMemberById(id);
-                action.queue((null),
+                action.queue(
+
+                        // Handle success
+                        (member) -> {
+                            sendTriggerMessage(event, member);
+                        },
 
                         // Handle failure if the member does not exist (or another issue appeared)
                         (error) -> LoggerFactory.getLogger(Trigger.class).error(error.toString()));
-                Member member = event.getGuild().getMemberById(id);
-
-                // Skip if message is self-triggered or member is missing view permissions
-                if (event.getMember() == member || !member.hasPermission(event.getGuildChannel(),
-                        Permission.VIEW_CHANNEL) || member == null) {
-                    continue;
-                }
-
-                // If no toggle setting exists
-                if (!triggerToggle.containsKey(event.getMember().getId())) {
-                    triggerToggle.put(event.getMember().getId(), true);
-                }
-                // If toggle == false, skip to next ID
-                else if (!triggerToggle.get(event.getMember().getId())) {
-                    continue;
-                }
-
-                /*
-                 * Spam Check
-                 * 
-                 * Spam check should be done by checking the last 50 messages in the channel and
-                 * comparing the
-                 * timestamps of the current triggering message and the last triggering message.
-                 * If the difference
-                 * is less than MINIMUM_SECONDS_BETWEEN_MESSAGES, the message should be ignored.
-                 */
-                MessageHistory previousHistory = event.getChannel().getHistoryBefore(event.getMessageId(), 50)
-                        .complete();
-
-                for (Message message : previousHistory.getRetrievedHistory()) {
-
-                    // Check if message contains trigger phrase
-                    if (inSet(message.getContentRaw().toLowerCase(), triggerMap.get(id))) {
-
-                        // Check if message was sent by the same user
-                        if (!message.getAuthor().getId().equals(member.getId())) {
-
-                            // Check if the difference between the current message and the previous message
-                            // is less than MINIMUM_SECONDS_BETWEEN_MESSAGES
-                            long difference = event.getMessage().getTimeCreated().toEpochSecond()
-                                    - message.getTimeCreated()
-                                            .toEpochSecond();
-
-                            if (difference < MINIMUM_SECONDS_BETWEEN_MESSAGES) {
-                                continue userLoop;
-                            }
-                        }
-                    }
-                }
-
-                // Embed
-                EmbedBuilder builder = new EmbedBuilder()
-                        .setTitle("Message Trigger")
-                        .setColor(Color.green)
-                        .setFooter("All timestamps are formatted in PST / UTC+7 !");
-
-                // Retrieve last 4 messages in channel message history
-                MessageHistory history = event.getChannel().getHistoryBefore(event.getMessageId(), 4).complete();
-                List<String> messages = new ArrayList<>();
-
-                // Add messages to list and reverse messages in order of least -> most recent
-                for (Message message : history.getRetrievedHistory()) {
-                    String memberName = message.getAuthor().getName();
-                    messages.add(
-                            "**[" + TimeFormat.TIME_LONG.atTimestamp(message.getTimeCreated().toEpochSecond() * 1000)
-                                    + "] " + memberName + ":** " + message.getContentRaw() + "\n");
-                }
-                Collections.reverse(messages);
-
-                // Add trigger message
-                String triggerMember = event.getMessage().getAuthor().getName();
-                builder.addField("",
-                        "**[" + TimeFormat.TIME_LONG.now() + "] " + triggerMember + ":** " + event.getMessage()
-                                .getContentRaw(),
-                        false);
-
-                // Finish embed
-                builder.setDescription(String.join("", messages));
-                builder.addField("**Source Message**", "[Jump to](" + event.getJumpUrl() + ")", false);
-
-                // DM triggered member
-                member.getUser().openPrivateChannel()
-                        .flatMap(channel -> channel.sendMessageEmbeds(builder.build()).addActionRow(
-                                Button.secondary("server-id", "Server: " + event.getGuild().getName()).asDisabled()))
-                        .queue();
             }
         }
     }
@@ -517,6 +437,99 @@ public class Trigger extends ListenerAdapter {
                         Button.danger("reset", "Yes").asDisabled()).queue();
             }
         }
+    }
+
+    /**
+     * Sends trigger message to member
+     * 
+     * @param event  MessageReceivedEvent
+     * @param member Triggered member
+     */
+    void sendTriggerMessage(MessageReceivedEvent event, Member member) {
+
+        // Skip if message is self-triggered or member is missing view permissions
+        if (event.getMember() == member || !member.hasPermission(event.getGuildChannel(),
+                Permission.VIEW_CHANNEL) || member == null) {
+            return;
+        }
+
+        // If no toggle setting exists
+        if (!triggerToggle.containsKey(event.getMember().getId())) {
+            triggerToggle.put(event.getMember().getId(), true);
+        }
+        // If toggle == false, skip to next ID
+        else if (!triggerToggle.get(event.getMember().getId())) {
+            return;
+        }
+
+        /*
+         * Spam Check
+         * 
+         * Spam check should be done by checking the last 50 messages in the channel and
+         * comparing the
+         * timestamps of the current triggering message and the last triggering message.
+         * If the difference
+         * is less than MINIMUM_SECONDS_BETWEEN_MESSAGES, the message should be ignored.
+         */
+        MessageHistory previousHistory = event.getChannel().getHistoryBefore(event.getMessageId(), 50)
+                .complete();
+
+        for (Message message : previousHistory.getRetrievedHistory()) {
+
+            // Check if message contains trigger phrase
+            if (inSet(message.getContentRaw().toLowerCase(), triggerMap.get(member.getId()))) {
+
+                // Check if message was sent by the same user
+                if (!message.getAuthor().getId().equals(member.getId())) {
+
+                    // Check if the difference between the current message and the previous message
+                    // is less than MINIMUM_SECONDS_BETWEEN_MESSAGES
+                    long difference = event.getMessage().getTimeCreated().toEpochSecond()
+                            - message.getTimeCreated()
+                                    .toEpochSecond();
+
+                    if (difference < MINIMUM_SECONDS_BETWEEN_MESSAGES) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Embed
+        EmbedBuilder builder = new EmbedBuilder()
+                .setTitle("Message Trigger")
+                .setColor(Color.green)
+                .setFooter("All timestamps are formatted in PST / UTC+7 !");
+
+        // Retrieve last 4 messages in channel message history
+        MessageHistory history = event.getChannel().getHistoryBefore(event.getMessageId(), 4).complete();
+        List<String> messages = new ArrayList<>();
+
+        // Add messages to list and reverse messages in order of least -> most recent
+        for (Message message : history.getRetrievedHistory()) {
+            String memberName = message.getAuthor().getName();
+            messages.add(
+                    "**[" + TimeFormat.TIME_LONG.atTimestamp(message.getTimeCreated().toEpochSecond() * 1000)
+                            + "] " + memberName + ":** " + message.getContentRaw() + "\n");
+        }
+        Collections.reverse(messages);
+
+        // Add trigger message
+        String triggerMember = event.getMessage().getAuthor().getName();
+        builder.addField("",
+                "**[" + TimeFormat.TIME_LONG.now() + "] " + triggerMember + ":** " + event.getMessage()
+                        .getContentRaw(),
+                false);
+
+        // Finish embed
+        builder.setDescription(String.join("", messages));
+        builder.addField("**Source Message**", "[Jump to](" + event.getJumpUrl() + ")", false);
+
+        // DM triggered member
+        member.getUser().openPrivateChannel()
+                .flatMap(channel -> channel.sendMessageEmbeds(builder.build()).addActionRow(
+                        Button.secondary("server-id", "Server: " + event.getGuild().getName()).asDisabled()))
+                .queue();
     }
 
     /**
