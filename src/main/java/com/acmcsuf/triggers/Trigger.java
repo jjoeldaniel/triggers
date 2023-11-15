@@ -533,15 +533,15 @@ public class Trigger extends ListenerAdapter {
     }
 
     /**
-     * Checks if Set contains String
+     * Checks if set contains a substring of str
      *
      * @param str String
-     * @param set Containing Set
-     * @return True if set contains String
+     * @param set LinkedHashSet
+     * @return True if set contains a substring of str
      */
     boolean inSet(String str, LinkedHashSet<String> set) {
         for (String string : set) {
-            if (str.equals(string)) {
+            if (str.contains(string)) {
                 return true;
             }
         }
