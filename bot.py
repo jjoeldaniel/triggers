@@ -1,4 +1,5 @@
 import discord
+from discord import SlashCommandGroup
 from discord.ext import commands
 from dotenv import load_dotenv
 import os
@@ -13,9 +14,13 @@ if TOKEN is None:
     exit(1)
 
 
+debug_guild = [971225319153479790, 1131033337188855869]
+
+
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="$", intents=intents)
+bot = commands.Bot(intents=intents, debug_guild=debug_guild)
+reminder = SlashCommandGroup(name="reminder", description="Reminder commands")
 
 
 @bot.event
@@ -57,22 +62,20 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
 
 
-@bot.command(name="reminder clear")
-async def clear(ctx):
+@reminder.command()
+async def clear(ctx: discord.ApplicationContext):
     with util.get_db() as db:
         id = str(ctx.author.id)
         [db[key].remove(id) for key in db if id in db[key]]
 
-    await ctx.send("**Cleared all reminders**")
+    await ctx.respond("**Cleared all reminders**")
 
 
-@bot.command(name="reminder add")
-async def add(ctx, *args):
-    if args is None:
-        await ctx.send("**No reminder provided**")
+@reminder.command()
+async def add(ctx: discord.ApplicationContext, phrase: str):
+    if phrase is None:
+        await ctx.respond("**No reminder provided**")
         return
-
-    phrase = " ".join(args)
 
     with util.get_db() as db:
         id = str(ctx.author.id)
@@ -81,24 +84,24 @@ async def add(ctx, *args):
             db[phrase] = set()
 
         if id in db[phrase]:
-            await ctx.send("**Reminder already exists**")
+            await ctx.respond("**Reminder already exists**")
             return
         else:
             db[phrase].add(id)
 
-    await ctx.send(f"**Reminder added:** `{phrase}`")
+    await ctx.respond(f"**Reminder added:** `{phrase}`")
 
 
-@bot.command(name="reminder list")
-async def list(ctx):
+@reminder.command()
+async def list(ctx: discord.ApplicationContext):
     with util.get_db() as db:
         phrases = [f"`{key}`" for key in db if str(ctx.author.id) in db[key]]
 
         if len(phrases) == 0:
-            await ctx.send("**No reminders found**")
+            await ctx.respond("**No reminders found**")
             return
         else:
-            await ctx.send("**Reminders:**\n\n" + "\n".join(phrases))
+            await ctx.respond("**Reminders:**\n\n" + "\n".join(phrases))
 
 
 bot.run(str(TOKEN))
