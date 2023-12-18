@@ -1,21 +1,9 @@
-# Intellij
-.idea
-out/
-*.env
-
-# Java
-*.jar
+# Python
+/venv/
+*.db
+__pycache__/
 
 # Visual Studio Code
 .vscode
 
-### Gradle ###
-.gradle
-build/
-!gradle-wrapper.jar
-
-# Manifest MF
-*.MF
-
-# Bin folder
-bin/
+*.env
