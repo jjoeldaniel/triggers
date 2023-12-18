@@ -46,7 +46,7 @@ async def on_message(message: discord.Message):
                     ]
 
                     embed = discord.Embed(
-                        title="Message Trigger",
+                        title="Message Notification",
                         description="\n".join(content) + "\n\n" + message.jump_url,
                         color=0x00FF00,
                         timestamp=message.created_at,
@@ -57,19 +57,19 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
 
 
-@bot.command()
+@bot.command(name="reminder clear")
 async def clear(ctx):
     with util.get_db() as db:
         id = str(ctx.author.id)
         [db[key].remove(id) for key in db if id in db[key]]
 
-    await ctx.send("**Cleared all triggers**")
+    await ctx.send("**Cleared all reminders**")
 
 
-@bot.command()
+@bot.command(name="reminder add")
 async def add(ctx, *args):
     if args is None:
-        await ctx.send("**No trigger provided**")
+        await ctx.send("**No reminder provided**")
         return
 
     phrase = " ".join(args)
@@ -81,24 +81,24 @@ async def add(ctx, *args):
             db[phrase] = set()
 
         if id in db[phrase]:
-            await ctx.send("**Trigger already exists**")
+            await ctx.send("**Reminder already exists**")
             return
         else:
             db[phrase].add(id)
 
-    await ctx.send(f"**Trigger added:** `{phrase}`")
+    await ctx.send(f"**Reminder added:** `{phrase}`")
 
 
-@bot.command()
+@bot.command(name="reminder list")
 async def list(ctx):
     with util.get_db() as db:
         phrases = [f"`{key}`" for key in db if str(ctx.author.id) in db[key]]
 
         if len(phrases) == 0:
-            await ctx.send("**No triggers found**")
+            await ctx.send("**No reminders found**")
             return
         else:
-            await ctx.send("**Triggers:**\n\n" + "\n".join(phrases))
+            await ctx.send("**Reminders:**\n\n" + "\n".join(phrases))
 
 
 bot.run(str(TOKEN))
