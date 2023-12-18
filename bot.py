@@ -7,7 +7,7 @@ import util
 
 load_dotenv()
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("TOKEN")
 if TOKEN is None:
     print("No token provided")
     exit(1)
