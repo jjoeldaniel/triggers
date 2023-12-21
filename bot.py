@@ -39,7 +39,6 @@ async def on_message(message: discord.Message):
         for key in db:
             if key in message.content:
                 for id in db[key]:
-                    # Check cooldown
                     if cooldown.is_on_cooldown(id):
                         continue
                     else:
