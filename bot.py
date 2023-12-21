@@ -20,7 +20,7 @@ reminder = bot.create_group(name="reminder", description="Reminder commands")
 
 @bot.command(description="Sends the bot's latency.")
 async def ping(ctx):
-    await ctx.respond(f"Pong! Latency is `{bot.latency}` ms")
+    await ctx.respond(f"Pong! Latency is `{bot.latency}` ms", ephemeral=True)
 
 
 @bot.event
@@ -66,7 +66,7 @@ async def clear(ctx: discord.ApplicationContext):
         id = str(ctx.author.id)
         [db[key].remove(id) for key in db if id in db[key]]
 
-    await ctx.respond("**Cleared all reminders**")
+    await ctx.respond("**Cleared all reminders**", ephemeral=True)
 
 
 @reminder.command(description="Removes a reminder")
@@ -84,7 +84,7 @@ async def remove(ctx: discord.ApplicationContext, phrase: str):
         else:
             db[phrase].remove(id)
 
-    await ctx.respond(f"**Reminder removed:** `{phrase}`")
+    await ctx.respond(f"**Reminder removed:** `{phrase}`", ephemeral=True)
 
 
 @reminder.command(description="Adds a reminder")
@@ -105,7 +105,7 @@ async def add(ctx: discord.ApplicationContext, phrase: str):
         else:
             db[phrase].add(id)
 
-    await ctx.respond(f"**Reminder added:** `{phrase}`")
+    await ctx.respond(f"**Reminder added:** `{phrase}`", ephemeral=True)
 
 
 @reminder.command(description="Lists all stored reminders")
@@ -114,10 +114,10 @@ async def list(ctx: discord.ApplicationContext):
         phrases = [f"`{key}`" for key in db if str(ctx.author.id) in db[key]]
 
         if len(phrases) == 0:
-            await ctx.respond("**No reminders found**")
+            await ctx.respond("**No reminders found**", ephemeral=True)
             return
         else:
-            await ctx.respond("**Reminders:**\n\n" + "\n".join(phrases))
+            await ctx.respond("**Reminders:**\n\n" + "\n".join(phrases), ephemeral=True)
 
 
 bot.run(str(TOKEN))
