@@ -13,3 +13,7 @@ def get_cooldowns():
 
 def should_reply(client: ClientUser | None, message: Message):
     return not message.author.bot and message.author != client
+
+
+def clean_text(text: str):
+    return text.lower().strip()

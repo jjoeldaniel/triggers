@@ -35,9 +35,11 @@ async def on_message(message: discord.Message):
     if not util.should_reply(bot.user, message):
         return
 
+    text = util.clean_text(message.content)
+
     with util.get_reminders() as db:
         for key in db:
-            if key in message.content:
+            if key in text:
                 for id in db[key]:
                     if cooldown.is_on_cooldown(id):
                         continue
@@ -52,7 +54,7 @@ async def on_message(message: discord.Message):
                     messages.reverse()
 
                     content = [
-                        f"<t:{calendar.timegm(message.created_at.timetuple())}:t> **{message.author.name}**: {message.content}"
+                        f"<t:{calendar.timegm(message.created_at.timetuple())}:t> **{message.author.name}**: {message.content.strip()}"
                         for message in messages
                     ]
 
@@ -77,6 +79,8 @@ async def clear(ctx: discord.ApplicationContext):
 
 @reminder.command(description="Removes a reminder")
 async def remove(ctx: discord.ApplicationContext, phrase: str):
+    phrase = util.clean_text(phrase)
+
     if phrase is None:
         await ctx.respond("**No reminder provided**")
         return
@@ -98,6 +102,8 @@ async def add(ctx: discord.ApplicationContext, phrase: str):
     if phrase is None:
         await ctx.respond("**No reminder provided**")
         return
+
+    phrase = util.clean_text(phrase)
 
     with util.get_reminders() as db:
         id = str(ctx.author.id)
