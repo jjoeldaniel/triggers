@@ -13,12 +13,9 @@ if TOKEN is None:
     exit(1)
 
 
-debug_guild = [971225319153479790, 1131033337188855869]
-
-
 intents = discord.Intents.default()
 intents.message_content = True
-bot = discord.Bot(intents=intents, debug_guild=debug_guild)
+bot = discord.Bot(intents=intents)
 reminder = bot.create_group(name="reminder", description="Reminder commands")
 
 
