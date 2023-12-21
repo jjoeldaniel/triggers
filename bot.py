@@ -1,6 +1,5 @@
 import discord
 from discord import SlashCommandGroup
-from discord.ext import commands
 from dotenv import load_dotenv
 import os
 import calendar
@@ -19,8 +18,13 @@ debug_guild = [971225319153479790, 1131033337188855869]
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(intents=intents, debug_guild=debug_guild)
-reminder = SlashCommandGroup(name="reminder", description="Reminder commands")
+bot = discord.Bot(intents=intents, debug_guild=debug_guild)
+reminder = bot.create_group(name="reminder", description="Reminder commands")
+
+
+@bot.command(description="Sends the bot's latency.")
+async def ping(ctx):
+    await ctx.respond(f"Pong! Latency is `{bot.latency}` ms")
 
 
 @bot.event
@@ -31,7 +35,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: discord.Message):
-    if not util.should_reply(bot, message):
+    if not util.should_reply(bot.user, message):
         return
 
     with util.get_db() as db:
@@ -59,10 +63,8 @@ async def on_message(message: discord.Message):
 
                     await user.send(embed=embed)
 
-    await bot.process_commands(message)
 
-
-@reminder.command()
+@reminder.command(description="Cleares a users stored reminders")
 async def clear(ctx: discord.ApplicationContext):
     with util.get_db() as db:
         id = str(ctx.author.id)
@@ -71,7 +73,25 @@ async def clear(ctx: discord.ApplicationContext):
     await ctx.respond("**Cleared all reminders**")
 
 
-@reminder.command()
+@reminder.command(description="Removes a reminder")
+async def remove(ctx: discord.ApplicationContext, phrase: str):
+    if phrase is None:
+        await ctx.respond("**No reminder provided**")
+        return
+
+    with util.get_db() as db:
+        id = str(ctx.author.id)
+
+        if phrase not in db:
+            await ctx.respond("**Reminder does not exist**")
+            return
+        else:
+            db[phrase].remove(id)
+
+    await ctx.respond(f"**Reminder removed:** `{phrase}`")
+
+
+@reminder.command(description="Adds a reminder")
 async def add(ctx: discord.ApplicationContext, phrase: str):
     if phrase is None:
         await ctx.respond("**No reminder provided**")
@@ -92,7 +112,7 @@ async def add(ctx: discord.ApplicationContext, phrase: str):
     await ctx.respond(f"**Reminder added:** `{phrase}`")
 
 
-@reminder.command()
+@reminder.command(description="Lists all stored reminders")
 async def list(ctx: discord.ApplicationContext):
     with util.get_db() as db:
         phrases = [f"`{key}`" for key in db if str(ctx.author.id) in db[key]]
