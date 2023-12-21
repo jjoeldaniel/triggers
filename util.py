@@ -3,8 +3,12 @@ from discord import Message
 from discord import ClientUser
 
 
-def get_db():
-    return shelve.open("triggers", writeback=True)
+def get_reminders():
+    return shelve.open("reminders", writeback=True)
+
+
+def get_cooldowns():
+    return shelve.open("cooldowns", writeback=True)
 
 
 def should_reply(client: ClientUser | None, message: Message):

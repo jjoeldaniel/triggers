@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 import calendar
 import util
+import cooldown
 
 load_dotenv()
 
@@ -34,10 +35,16 @@ async def on_message(message: discord.Message):
     if not util.should_reply(bot.user, message):
         return
 
-    with util.get_db() as db:
+    with util.get_reminders() as db:
         for key in db:
             if key in message.content:
                 for id in db[key]:
+                    # Check cooldown
+                    if cooldown.is_on_cooldown(id):
+                        continue
+                    else:
+                        cooldown.update_cooldown(id)
+
                     user = await bot.fetch_user(id)
 
                     messages = [
@@ -62,7 +69,7 @@ async def on_message(message: discord.Message):
 
 @reminder.command(description="Cleares a users stored reminders")
 async def clear(ctx: discord.ApplicationContext):
-    with util.get_db() as db:
+    with util.get_reminders() as db:
         id = str(ctx.author.id)
         [db[key].remove(id) for key in db if id in db[key]]
 
@@ -75,7 +82,7 @@ async def remove(ctx: discord.ApplicationContext, phrase: str):
         await ctx.respond("**No reminder provided**")
         return
 
-    with util.get_db() as db:
+    with util.get_reminders() as db:
         id = str(ctx.author.id)
 
         if phrase not in db:
@@ -93,7 +100,7 @@ async def add(ctx: discord.ApplicationContext, phrase: str):
         await ctx.respond("**No reminder provided**")
         return
 
-    with util.get_db() as db:
+    with util.get_reminders() as db:
         id = str(ctx.author.id)
 
         if phrase not in db:
@@ -110,7 +117,7 @@ async def add(ctx: discord.ApplicationContext, phrase: str):
 
 @reminder.command(description="Lists all stored reminders")
 async def list(ctx: discord.ApplicationContext):
-    with util.get_db() as db:
+    with util.get_reminders() as db:
         phrases = [f"`{key}`" for key in db if str(ctx.author.id) in db[key]]
 
         if len(phrases) == 0:
