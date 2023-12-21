@@ -1,5 +1,4 @@
 import discord
-from discord import SlashCommandGroup
 from dotenv import load_dotenv
 import os
 import calendar
